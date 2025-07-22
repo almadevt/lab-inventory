@@ -120,6 +120,14 @@
             grid-column: 1 / -1; /* Span across all columns in grid */
             margin-top: 10px;
         }
+        button.search-button {
+            background-color: #3b82f6; /* Blue for search button */
+            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.2);
+        }
+        button.search-button:hover {
+            background-color: #2563eb; /* Darker blue on hover */
+            box-shadow: 0 6px 15px rgba(59, 130, 246, 0.3);
+        }
         button:hover {
             background-color: #16a34a; /* Darker green on hover */
             transform: translateY(-2px);
@@ -211,6 +219,28 @@
             left: 0;
         }
 
+        /* Search Section */
+        .search-section {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            align-items: flex-end; /* Align button with input */
+        }
+        .search-section input[type="text"] {
+            flex-grow: 1;
+            padding: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 1em;
+            color: #334155;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .search-section input[type="text"]:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+            outline: none;
+        }
+
         /* Responsive Design */
         @media (max-width: 768px) {
             .game-container {
@@ -226,6 +256,13 @@
             th, td {
                 padding: 10px;
                 font-size: 0.9em;
+            }
+            .search-section {
+                flex-direction: column; /* Stack search input and button */
+                align-items: stretch;
+            }
+            .search-section button {
+                width: 100%;
             }
         }
     </style>
@@ -244,6 +281,7 @@
                 <li><strong>Minimum Stock:</strong> This is the quantity at which you should reorder an item.</li>
                 <li><strong>Notifications:</strong> The "Important Notifications" section will alert you about items that are low in stock, out of stock, expiring soon, or already expired.</li>
                 <li><strong>Observe Changes:</strong> After adding an item, the inventory table and notifications will update automatically.</li>
+                <li><strong>Search Inventory:</strong> Use the search bar to filter items by name, type, or status.</li>
             </ul>
         </div>
 
@@ -288,6 +326,11 @@
 
         <div class="inventory-section">
             <h2>Current Inventory</h2>
+            <div class="search-section">
+                <input type="text" id="search-input" placeholder="Search by name, type, or status...">
+                <button id="search-button" class="search-button">Search</button>
+                <button id="clear-search-button" class="search-button">Clear Search</button>
+            </div>
             <table id="inventory-table">
                 <thead>
                     <tr>
@@ -473,25 +516,43 @@
             }
         }
 
-        // Function to display the inventory in the table
-        function displayInventory() {
+        // Function to display the inventory in the table, with optional filtering
+        function displayInventory(filterTerm = '') {
             const tableBody = document.querySelector('#inventory-table tbody');
             tableBody.innerHTML = ''; // Clear existing rows
 
-            inventory.forEach(item => {
-                const row = tableBody.insertRow();
-                row.insertCell().textContent = item.name;
-                row.insertCell().textContent = item.type;
-                row.insertCell().textContent = item.quantity;
-                row.insertCell().textContent = item.minStock;
-                row.insertCell().textContent = item.expiryDate ? item.expiryDate : 'N/A';
+            const lowerCaseFilterTerm = filterTerm.toLowerCase();
 
-                const statusCell = row.insertCell();
-                const statusBadge = document.createElement('span');
-                statusBadge.classList.add('status-badge', getItemStatus(item).statusClass);
-                statusBadge.textContent = item.status;
-                statusCell.appendChild(statusBadge);
+            // Filter the inventory based on the search term
+            const filteredInventory = inventory.filter(item => {
+                return item.name.toLowerCase().includes(lowerCaseFilterTerm) ||
+                       item.type.toLowerCase().includes(lowerCaseFilterTerm) ||
+                       item.status.toLowerCase().includes(lowerCaseFilterTerm);
             });
+
+            if (filteredInventory.length === 0 && filterTerm !== '') {
+                const row = tableBody.insertRow();
+                const cell = row.insertCell();
+                cell.colSpan = 6; // Span across all columns
+                cell.textContent = 'No items found matching your search.';
+                cell.style.textAlign = 'center';
+                cell.style.padding = '20px';
+            } else {
+                filteredInventory.forEach(item => {
+                    const row = tableBody.insertRow();
+                    row.insertCell().textContent = item.name;
+                    row.insertCell().textContent = item.type;
+                    row.insertCell().textContent = item.quantity;
+                    row.insertCell().textContent = item.minStock;
+                    row.insertCell().textContent = item.expiryDate ? item.expiryDate : 'N/A';
+
+                    const statusCell = row.insertCell();
+                    const statusBadge = document.createElement('span');
+                    statusBadge.classList.add('status-badge', getItemStatus(item).statusClass);
+                    statusBadge.textContent = item.status;
+                    statusCell.appendChild(statusBadge);
+                });
+            }
         }
 
         // Handle adding a new item from the form
@@ -528,7 +589,7 @@
 
             // Update display and notifications
             checkInventoryStatus();
-            displayInventory();
+            displayInventory(); // Display all items after adding
 
             // Clear the form
             event.target.reset();
@@ -536,11 +597,37 @@
             document.getElementById('item-expiry-date').value = '';
         }
 
+        // Handle search functionality
+        function handleSearch() {
+            const searchTerm = document.getElementById('search-input').value;
+            displayInventory(searchTerm);
+        }
+
+        // Handle clear search functionality
+        function handleClearSearch() {
+            document.getElementById('search-input').value = ''; // Clear input
+            displayInventory(); // Display all items
+        }
+
         // Set up event listeners when the DOM is fully loaded
         document.addEventListener('DOMContentLoaded', () => {
             initializeInventory(); // Populate initial inventory
             const addItemForm = document.getElementById('add-item-form');
             addItemForm.addEventListener('submit', handleAddItem);
+
+            const searchButton = document.getElementById('search-button');
+            searchButton.addEventListener('click', handleSearch);
+
+            const clearSearchButton = document.getElementById('clear-search-button');
+            clearSearchButton.addEventListener('click', handleClearSearch);
+
+            // Optional: Allow search on "Enter" key press in the search input
+            const searchInput = document.getElementById('search-input');
+            searchInput.addEventListener('keyup', (event) => {
+                if (event.key === 'Enter') {
+                    handleSearch();
+                }
+            });
         });
     </script>
 </body>
