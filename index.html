@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clinical Lab Inventory Game</title>
+    <!-- Inter font from Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* General Body Styling */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Light blue-gray background */
+            color: #334155; /* Dark slate gray text */
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        /* Container for the whole game */
+        .game-container {
+            background-color: #ffffff; /* White background for the main container */
+            border-radius: 15px; /* Rounded corners */
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); /* Soft shadow */
+            padding: 30px;
+            max-width: 1200px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            box-sizing: border-box;
+        }
+
+        /* Section Headers */
+        h1, h2 {
+            color: #1e293b; /* Darker blue-gray for headers */
+            text-align: center;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        /* Instructions Section */
+        .instructions {
+            background-color: #e0f2fe; /* Light blue background */
+            border-left: 5px solid #0ea5e9; /* Blue border */
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 0.95em;
+            line-height: 1.6;
+        }
+        .instructions h2 {
+            color: #0ea5e9; /* Blue for instruction header */
+            margin-top: 0;
+            text-align: left;
+            margin-bottom: 10px;
+        }
+        .instructions ul {
+            list-style-type: disc;
+            margin-left: 20px;
+            padding: 0;
+        }
+        .instructions li {
+            margin-bottom: 8px;
+        }
+
+        /* Form Styling (Add New Item) */
+        .add-item-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            padding: 25px;
+            background-color: #f8fafc; /* Lighter background for form */
+            border-radius: 10px;
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .form-group label {
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #475569; /* Medium slate gray */
+        }
+        .form-group input[type="text"],
+        .form-group input[type="number"],
+        .form-group input[type="date"],
+        .form-group select {
+            padding: 12px;
+            border: 1px solid #cbd5e1; /* Light gray border */
+            border-radius: 8px; /* Rounded input fields */
+            font-size: 1em;
+            color: #334155;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: #3b82f6; /* Blue border on focus */
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); /* Light blue shadow on focus */
+            outline: none;
+        }
+
+        /* Button Styling */
+        button {
+            background-color: #22c55e; /* Green button */
+            color: white;
+            padding: 14px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 10px rgba(34, 197, 94, 0.2);
+            grid-column: 1 / -1; /* Span across all columns in grid */
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #16a34a; /* Darker green on hover */
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(34, 197, 94, 0.3);
+        }
+        button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 5px rgba(34, 197, 94, 0.2);
+        }
+
+        /* Inventory Table */
+        .inventory-section {
+            overflow-x: auto; /* Enable horizontal scrolling for small screens */
+        }
+        table {
+            width: 100%;
+            border-collapse: separate; /* Allows border-radius on cells */
+            border-spacing: 0;
+            margin-top: 20px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            overflow: hidden; /* Ensures rounded corners are visible */
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        }
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0; /* Light border between rows */
+        }
+        th {
+            background-color: #f1f5f9; /* Light gray for table header */
+            font-weight: 600;
+            color: #475569;
+            text-transform: uppercase;
+            font-size: 0.9em;
+        }
+        tr:last-child td {
+            border-bottom: none; /* No border on the last row */
+        }
+        tbody tr:hover {
+            background-color: #f8fafc; /* Subtle hover effect on rows */
+        }
+
+        /* Status Badges */
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px; /* Pill shape */
+            font-size: 0.85em;
+            font-weight: 600;
+            text-transform: capitalize;
+            white-space: nowrap; /* Prevent text wrapping */
+        }
+        .status-in-stock { background-color: #dcfce7; color: #16a34a; } /* Green */
+        .status-low-stock { background-color: #fef9c3; color: #b45309; } /* Yellow-orange */
+        .status-out-of-stock { background-color: #fee2e2; color: #dc2626; } /* Red */
+        .status-expiring-soon { background-color: #ffedd5; color: #ea580c; } /* Orange */
+        .status-expired { background-color: #fecaca; color: #b91c1c; } /* Darker Red */
+
+        /* Notifications Area */
+        .notifications {
+            background-color: #fffbeb; /* Light yellow background */
+            border-left: 5px solid #f59e0b; /* Orange border */
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        .notifications h2 {
+            color: #f59e0b; /* Orange for notification header */
+            margin-top: 0;
+            text-align: left;
+            margin-bottom: 10px;
+        }
+        .notifications ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+        .notifications li {
+            margin-bottom: 8px;
+            padding-left: 10px;
+            position: relative;
+        }
+        .notifications li::before {
+            content: '•';
+            color: #f59e0b;
+            position: absolute;
+            left: 0;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .game-container {
+                padding: 20px;
+                margin: 10px;
+            }
+            .add-item-form {
+                grid-template-columns: 1fr; /* Stack inputs on small screens */
+            }
+            button {
+                width: 100%;
+            }
+            th, td {
+                padding: 10px;
+                font-size: 0.9em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>Clinical Laboratory Inventory Management Game</h1>
+
+        <div class="instructions">
+            <h2>Game Instructions</h2>
+            <ul>
+                <li><strong>Objective:</strong> Learn to manage laboratory inventory effectively by tracking reagents and consumables.</li>
+                <li><strong>Initial Inventory:</strong> The table below shows your current stock. Pay attention to quantities, expiry dates, and statuses.</li>
+                <li><strong>Add New Items:</strong> Use the form to simulate receiving new shipments. Enter details like item name, type (Reagent/Consumable), quantity, minimum stock level, and expiry date.</li>
+                <li><strong>Expiry Date:</strong> Enter dates in YYYY-MM-DD format. If an item doesn't expire, you can leave this blank.</li>
+                <li><strong>Minimum Stock:</strong> This is the quantity at which you should reorder an item.</li>
+                <li><strong>Notifications:</strong> The "Important Notifications" section will alert you about items that are low in stock, out of stock, expiring soon, or already expired.</li>
+                <li><strong>Observe Changes:</strong> After adding an item, the inventory table and notifications will update automatically.</li>
+            </ul>
+        </div>
+
+        <div class="notifications">
+            <h2>Important Notifications</h2>
+            <ul id="notification-list">
+                <!-- Notifications will be dynamically added here -->
+                <li>No new notifications.</li>
+            </ul>
+        </div>
+
+        <div class="add-item-section">
+            <h2>Add New Inventory Item</h2>
+            <form id="add-item-form" class="add-item-form">
+                <div class="form-group">
+                    <label for="item-name">Item Name:</label>
+                    <input type="text" id="item-name" placeholder="e.g., Glucose Reagent" required>
+                </div>
+                <div class="form-group">
+                    <label for="item-type">Type:</label>
+                    <select id="item-type" required>
+                        <option value="">Select Type</option>
+                        <option value="Reagent">Reagent</option>
+                        <option value="Consumable">Consumable</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="item-quantity">Quantity:</label>
+                    <input type="number" id="item-quantity" min="0" value="1" required>
+                </div>
+                <div class="form-group">
+                    <label for="item-min-stock">Minimum Stock:</label>
+                    <input type="number" id="item-min-stock" min="0" value="5" required>
+                </div>
+                <div class="form-group">
+                    <label for="item-expiry-date">Expiry Date:</label>
+                    <input type="date" id="item-expiry-date">
+                </div>
+                <button type="submit">Add Item to Inventory</button>
+            </form>
+        </div>
+
+        <div class="inventory-section">
+            <h2>Current Inventory</h2>
+            <table id="inventory-table">
+                <thead>
+                    <tr>
+                        <th>Item Name</th>
+                        <th>Type</th>
+                        <th>Quantity</th>
+                        <th>Min Stock</th>
+                        <th>Expiry Date</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Inventory items will be dynamically added here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Array to hold all inventory items
+        let inventory = [];
+        let itemIdCounter = 0; // To ensure unique IDs for new items
+
+        // Function to get today's date in YYYY-MM-DD format
+        function getTodayDateString() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+            const day = String(today.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // Function to add days to a date and return in YYYY-MM-DD format
+        function addDays(date, days) {
+            const result = new Date(date);
+            result.setDate(result.getDate() + days);
+            const year = result.getFullYear();
+            const month = String(result.getMonth() + 1).padStart(2, '0');
+            const day = String(result.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // Initialize inventory with sample data
+        function initializeInventory() {
+            const today = getTodayDateString();
+            inventory = [
+                {
+                    id: itemIdCounter++,
+                    name: "Glucose Reagent",
+                    type: "Reagent",
+                    quantity: 3,
+                    minStock: 5,
+                    expiryDate: addDays(today, 20), // Expiring soon
+                    status: ""
+                },
+                {
+                    id: itemIdCounter++,
+                    name: "Sodium Chloride 0.9%",
+                    type: "Reagent",
+                    quantity: 20,
+                    minStock: 10,
+                    expiryDate: addDays(today, 365), // Far expiry
+                    status: ""
+                },
+                {
+                    id: itemIdCounter++,
+                    name: "Pipette Tips (1000uL)",
+                    type: "Consumable",
+                    quantity: 0,
+                    minStock: 50,
+                    expiryDate: null, // No expiry
+                    status: ""
+                },
+                {
+                    id: itemIdCounter++,
+                    name: "Blood Collection Tubes (EDTA)",
+                    type: "Consumable",
+                    quantity: 15,
+                    minStock: 20,
+                    expiryDate: addDays(today, -5), // Expired
+                    status: ""
+                },
+                {
+                    id: itemIdCounter++,
+                    name: "Microscope Slides",
+                    type: "Consumable",
+                    quantity: 6,
+                    minStock: 5,
+                    expiryDate: null,
+                    status: ""
+                },
+                {
+                    id: itemIdCounter++,
+                    name: "Gram Stain Solution (Crystal Violet)",
+                    type: "Reagent",
+                    quantity: 12,
+                    minStock: 8,
+                    expiryDate: addDays(today, 180),
+                    status: ""
+                },
+                {
+                    id: itemIdCounter++,
+                    name: "Petri Dishes (100mm)",
+                    type: "Consumable",
+                    quantity: 5,
+                    minStock: 5,
+                    expiryDate: null,
+                    status: ""
+                }
+            ];
+            // After initializing, check statuses and display
+            checkInventoryStatus();
+            displayInventory();
+        }
+
+        // Function to determine the status of an inventory item
+        function getItemStatus(item) {
+            const today = new Date(getTodayDateString()); // Get today's date for comparison
+            let status = "In Stock";
+            let statusClass = "status-in-stock";
+
+            // Check stock levels first
+            if (item.quantity === 0) {
+                status = "Out of Stock";
+                statusClass = "status-out-of-stock";
+            } else if (item.quantity <= item.minStock) {
+                status = "Low Stock";
+                statusClass = "status-low-stock";
+            }
+
+            // Check expiry date (only if not already Out of Stock)
+            if (item.expiryDate) {
+                const expiry = new Date(item.expiryDate);
+                const timeDiff = expiry.getTime() - today.getTime();
+                const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24)); // Convert milliseconds to days
+
+                if (daysDiff <= 0 && item.quantity > 0) { // Expired and not out of stock
+                    status = "Expired";
+                    statusClass = "status-expired";
+                } else if (daysDiff <= 30 && daysDiff > 0 && item.quantity > 0) { // Expiring soon (within 30 days)
+                    if (status === "In Stock" || status === "Low Stock") { // Only override if not already critical
+                        status = "Expiring Soon";
+                        statusClass = "status-expiring-soon";
+                    }
+                }
+            }
+            return { status, statusClass };
+        }
+
+        // Function to update inventory statuses and generate notifications
+        function checkInventoryStatus() {
+            const notificationList = document.getElementById('notification-list');
+            notificationList.innerHTML = ''; // Clear previous notifications
+            let hasNotifications = false;
+
+            inventory.forEach(item => {
+                const { status, statusClass } = getItemStatus(item);
+                item.status = status; // Update item's status property
+
+                let notificationMessage = '';
+                if (status === "Out of Stock") {
+                    notificationMessage = `🚨 ${item.name} is OUT OF STOCK! Order immediately.`;
+                } else if (status === "Low Stock") {
+                    notificationMessage = `⚠️ ${item.name} is LOW IN STOCK (${item.quantity} left). Consider reordering.`;
+                } else if (status === "Expiring Soon") {
+                    notificationMessage = `⏳ ${item.name} is EXPIRING SOON (${item.expiryDate}). Use or reorder.`;
+                } else if (status === "Expired") {
+                    notificationMessage = `❌ ${item.name} is EXPIRED (${item.expiryDate}). Do not use!`;
+                }
+
+                if (notificationMessage) {
+                    const li = document.createElement('li');
+                    li.textContent = notificationMessage;
+                    notificationList.appendChild(li);
+                    hasNotifications = true;
+                }
+            });
+
+            if (!hasNotifications) {
+                const li = document.createElement('li');
+                li.textContent = 'No critical inventory issues at the moment. Good job!';
+                notificationList.appendChild(li);
+            }
+        }
+
+        // Function to display the inventory in the table
+        function displayInventory() {
+            const tableBody = document.querySelector('#inventory-table tbody');
+            tableBody.innerHTML = ''; // Clear existing rows
+
+            inventory.forEach(item => {
+                const row = tableBody.insertRow();
+                row.insertCell().textContent = item.name;
+                row.insertCell().textContent = item.type;
+                row.insertCell().textContent = item.quantity;
+                row.insertCell().textContent = item.minStock;
+                row.insertCell().textContent = item.expiryDate ? item.expiryDate : 'N/A';
+
+                const statusCell = row.insertCell();
+                const statusBadge = document.createElement('span');
+                statusBadge.classList.add('status-badge', getItemStatus(item).statusClass);
+                statusBadge.textContent = item.status;
+                statusCell.appendChild(statusBadge);
+            });
+        }
+
+        // Handle adding a new item from the form
+        function handleAddItem(event) {
+            event.preventDefault(); // Prevent default form submission
+
+            const itemName = document.getElementById('item-name').value.trim();
+            const itemType = document.getElementById('item-type').value;
+            const itemQuantity = parseInt(document.getElementById('item-quantity').value, 10);
+            const itemMinStock = parseInt(document.getElementById('item-min-stock').value, 10);
+            const itemExpiryDate = document.getElementById('item-expiry-date').value;
+
+            // Basic validation
+            if (!itemName || !itemType || isNaN(itemQuantity) || isNaN(itemMinStock)) {
+                alert('Please fill in all required fields (Name, Type, Quantity, Minimum Stock).');
+                return;
+            }
+            if (itemQuantity < 0 || itemMinStock < 0) {
+                alert('Quantity and Minimum Stock cannot be negative.');
+                return;
+            }
+
+            const newItem = {
+                id: itemIdCounter++,
+                name: itemName,
+                type: itemType,
+                quantity: itemQuantity,
+                minStock: itemMinStock,
+                expiryDate: itemExpiryDate || null, // Store as null if empty
+                status: "" // Status will be calculated
+            };
+
+            inventory.push(newItem); // Add new item to the array
+
+            // Update display and notifications
+            checkInventoryStatus();
+            displayInventory();
+
+            // Clear the form
+            event.target.reset();
+            // Reset the expiry date input to empty string
+            document.getElementById('item-expiry-date').value = '';
+        }
+
+        // Set up event listeners when the DOM is fully loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeInventory(); // Populate initial inventory
+            const addItemForm = document.getElementById('add-item-form');
+            addItemForm.addEventListener('submit', handleAddItem);
+        });
+    </script>
+</body>
+</html>
